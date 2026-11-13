@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vision Next AI Assistant (test)</title>
+<style>
+:root{--bg:#060e1a;--fg:#eef2f7;--card:#0a1525;--bd:#1a2d45;--gold:#c9a96e;--muted:#7a8fa8}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,sans-serif;height:100vh;display:flex;flex-direction:column}
+header{padding:14px 16px;border-bottom:1px solid var(--bd);font-weight:600;color:var(--gold)}
+header small{display:block;font-weight:400;color:var(--muted)}
+#banner{background:#3a2a00;color:#f5d98b;padding:6px 16px;font-size:13px}
+#log{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px}
+.m{max-width:85%;padding:10px 14px;border-radius:12px;line-height:1.5;white-space:pre-wrap}
+.u{align-self:flex-end;background:var(--gold);color:#03080f}.a{align-self:flex-start;background:var(--card);border:1px solid var(--bd)}
+form.chat{display:flex;gap:8px;padding:12px;border-top:1px solid var(--bd)}
+input,select,textarea{width:100%;padding:10px;border-radius:8px;border:1px solid var(--bd);background:#03080f;color:var(--fg);font-size:15px;font-family:inherit}
+form.chat input{flex:1}
+button,a.btn{padding:10px 16px;border:0;border-radius:8px;background:var(--gold);color:#03080f;font-size:15px;cursor:pointer;text-decoration:none;display:inline-block}
+a.wa{background:#25d366;color:#fff}
+.card{align-self:flex-start;width:min(440px,92%);background:var(--card);border:1px solid var(--gold);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px}
+.card label{font-size:12px;color:var(--muted)}.row{display:flex;gap:8px}.row>div{flex:1}
+.card .acts{display:flex;gap:8px;flex-wrap:wrap}
+</style></head><body>
+<header id="title">Vision Next AI Assistant<small>Real estate, design, construction and furniture. Not legal or tax advice.</small></header>
+<div id="banner"></div>
+<div id="log"></div>
+<form class="chat" id="f"><input id="i" placeholder="Ask anything..." autocomplete="off"><button>Send</button></form>
+<script>
+// ---- Settings ----
+const WORKER_URL = "https://global-space-ai.YOUR-SUBDOMAIN.workers.dev";
+const FORMSPREE_URL = "https://formspree.io/f/xojyvggw"; // same as visionnext.co form
+const SEND_LIVE = false; // false = test mode: never posts to your real form
+const SERVICES = ["Real Estate (Global Space)","Design Studio (Vision Next)","Civil Execution (Scan Line)","Furniture (Wood House)","Full Turn-Key Solution"];
+const PERSONA = new URLSearchParams(location.search).get("persona") === "globalspace" ? "globalspace" : "visionnext";
+const WA = PERSONA === "globalspace" ? "923282277370" : "923360839136";
+// ------------------
+document.getElementById("banner").textContent = SEND_LIVE ? "" : "TEST MODE: enquiries are not sent anywhere. Persona: " + PERSONA;
+if(SEND_LIVE) document.getElementById("banner").style.display="none";
+if(PERSONA==="globalspace") document.getElementById("title").firstChild.textContent="Global Space AI Consultant";
+const log=document.getElementById("log"), f=document.getElementById("f"), i=document.getElementById("i"), history=[];
+function add(t,c){const d=document.createElement("div");d.className="m "+c;d.textContent=t;log.appendChild(d);log.scrollTop=log.scrollHeight;return d}
+add(PERSONA==="globalspace"?"Assalam o Alaikum! I'm the Global Space AI consultant. Looking to buy, sell, rent or invest in Karachi?":"Assalam o Alaikum! I'm the Vision Next assistant. I can help with real estate, design, construction and furniture. What are you looking to do?","a");
+function field(label,name,val,type){return '<div><label>'+label+'</label><input name="'+name+'" type="'+(type||"text")+'" value="'+(val||"").replace(/"/g,"&quot;")+'"></div>'}
+function showCard(v){
+  const c=document.createElement("div");c.className="card";
+  const opts=SERVICES.map(s=>"<option"+(s===v[4]?" selected":"")+">"+s+"</option>").join("");
+  c.innerHTML='<b>Please check your details</b><form><div class="row">'+field("First name","firstName",v[0])+field("Last name","lastName",v[1])+'</div>'+
+    field("Email","email",v[2],"email")+field("Phone / WhatsApp","phone",v[3],"tel")+
+    '<div><label>Service</label><select name="service"><option value="">Select...</option>'+opts+'</select></div>'+
+    '<div><label>Message</label><textarea name="message" rows="4"></textarea></div><div class="acts"></div></form>';
+  const form=c.querySelector("form"); form.message.value=v[5]||"";
+  const acts=c.querySelector(".acts");
+  const send=document.createElement("button");send.type="submit";send.textContent="Send to team";acts.appendChild(send);
+  const wa=document.createElement("a");wa.className="btn wa";wa.target="_blank";wa.rel="noopener";wa.textContent="WhatsApp instead";
+  wa.onclick=()=>{wa.href="https://wa.me/"+WA+"?text="+encodeURIComponent("Hi, I'm "+form.firstName.value+" "+form.lastName.value+". "+form.service.value+": "+form.message.value)};
+  acts.appendChild(wa);
+  form.addEventListener("submit",async e=>{
+    e.preventDefault();send.disabled=true;send.textContent="Sending...";
+    const fd=new FormData(form);fd.set("message","[AI chat] "+form.message.value);
+    try{
+      if(SEND_LIVE){const r=await fetch(FORMSPREE_URL,{method:"POST",body:fd,headers:{Accept:"application/json"}});if(!r.ok)throw 0}
+      c.innerHTML="<b>"+(SEND_LIVE?"Sent. We'll be in touch within 24 hours.":"Test mode: this would have been sent to the team.")+"</b>";
+    }catch{send.disabled=false;send.textContent="Error, try again"}
+  });
+  log.appendChild(c);log.scrollTop=log.scrollHeight;
+}
+f.addEventListener("submit",async e=>{
+  e.preventDefault();const t=i.value.trim();if(!t)return;
+  i.value="";add(t,"u");history.push({role:"user",content:t});
+  const w=add("...","a");
+  try{
+    const r=await fetch(WORKER_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({persona:PERSONA,messages:history})});
+    const {reply}=await r.json();history.push({role:"assistant",content:reply});
+    const m=reply.match(/\[\[ENQUIRY\|([^\]]*)\]\]/);
+    w.textContent=reply.replace(/\[\[ENQUIRY\|[^\]]*\]\]/,"").trim();
+    if(m) showCard(m[1].split("|").map(x=>(x||"").trim()));
+  }catch{w.textContent="Connection problem. Please WhatsApp the team."}
+});
+</script></body></html>
