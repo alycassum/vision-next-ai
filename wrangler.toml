@@ -1,0 +1,14 @@
+name = "global-space-ai"
+main = "index.js"
+compatibility_date = "2025-01-01"
+
+# Free AI (Cloudflare Workers AI). No API key needed.
+[ai]
+binding = "AI"
+
+# Optional: choose a different free model from Cloudflare's model catalogue
+# [vars]
+# AI_MODEL = "@cf/google/gemma-4-26b-a4b-it"
+
+# Optional paid upgrade later: add a Claude key and the worker uses Claude instead
+#   npx wrangler secret put ANTHROPIC_API_KEY
