@@ -37,7 +37,9 @@ document.getElementById("banner").textContent = SEND_LIVE ? "" : "TEST MODE: enq
 if(SEND_LIVE) document.getElementById("banner").style.display="none";
 if(PERSONA==="globalspace") document.getElementById("title").firstChild.textContent="Global Space AI Consultant";
 const log=document.getElementById("log"), f=document.getElementById("f"), i=document.getElementById("i"), history=[];
-function add(t,c){const d=document.createElement("div");d.className="m "+c;d.textContent=t;log.appendChild(d);log.scrollTop=log.scrollHeight;return d}
+const esc=s=>s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+const fmt=t=>esc(t).replace(/^\s*[*-]\s+/gm,"\u2022 ").replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>").replace(/\*(.+?)\*/g,"<em>$1</em>");
+function add(t,c){const d=document.createElement("div");d.className="m "+c;if(c==="a")d.innerHTML=fmt(t);else d.textContent=t;log.appendChild(d);log.scrollTop=log.scrollHeight;return d}
 add(PERSONA==="globalspace"?"Assalam o Alaikum! I'm the Global Space AI consultant. Looking to buy, sell, rent or invest in Karachi?":"Assalam o Alaikum! I'm the Vision Next assistant. I can help with real estate, design, construction and furniture. What are you looking to do?","a");
 function field(label,name,val,type){return '<div><label>'+label+'</label><input name="'+name+'" type="'+(type||"text")+'" value="'+(val||"").replace(/"/g,"&quot;")+'"></div>'}
 function showCard(v){
@@ -71,7 +73,7 @@ f.addEventListener("submit",async e=>{
     const r=await fetch(WORKER_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({persona:PERSONA,messages:history})});
     const {reply}=await r.json();history.push({role:"assistant",content:reply});
     const m=reply.match(/\[\[ENQUIRY\|([^\]]*)\]\]/);
-    w.textContent=reply.replace(/\[\[ENQUIRY\|[^\]]*\]\]/,"").trim();
+    w.innerHTML=fmt(reply.replace(/\[\[ENQUIRY\|[^\]]*\]\]/,"").trim());
     if(m) showCard(m[1].split("|").map(x=>(x||"").trim()));
   }catch{w.textContent="Connection problem. Please WhatsApp the team."}
 });
